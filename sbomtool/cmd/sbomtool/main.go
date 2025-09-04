@@ -105,7 +105,7 @@ and includes CPE-based package deduplication for both merge and filter operation
 	return rootCmd
 }
 
-// createGenerateCommand creates and configures the generate subcommand.
+// createGenerateCommand creates the generate subcommand for SBOM file creation.
 func createGenerateCommand() *cobra.Command {
 	generateCmd := &cobra.Command{
 		Use:   "generate",
@@ -372,7 +372,7 @@ func analyzeBuildroot(buildrootPath string) ([]string, error) {
 	err := filepath.Walk(buildrootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			slog.Debug("Error accessing path during buildroot analysis", "path", path, "error", err)
-			return nil // Continue walking, don't fail on individual file errors
+			return nil
 		}
 
 		if info.Mode().IsRegular() {
@@ -548,31 +548,70 @@ func createMergeCommand() *cobra.Command {
 		Short: "Merge multiple SBOM files",
 		Long: `Merge multiple SBOM files into a single comprehensive SBOM.
 
-This feature is not yet implemented and will return an error.
-Future versions will support merging SBOM files with configurable merge levels.`,
+DESCRIPTION:
+The merge command combines multiple SBOM files while:
+- Deduplicating packages that appear in multiple inputs
+- Preserving all dependency relationships
+- Maintaining SBOM format integrity
+- Providing comprehensive merge statistics
+
+DEDUPLICATION:
+Packages are deduplicated based on CPE when available, with fallback to name+version+type.
+When duplicates are found:
+- First occurrence becomes the canonical package
+- File lists and metadata are merged from all duplicates
+- All relationships are updated to reference canonical packages
+
+SUPPORTED FORMATS:
+- SPDX 2.3 (JSON)
+- CycloneDX 1.6 (JSON)
+All input files must be the same format.`,
+
+		Example: `  # Merge multiple SPDX SBOMs
+  sbomtool merge --output merged.json app1-spdx.json app2-spdx.json lib1-spdx.json
+
+  # Merge with debug logging
+  sbomtool --log-level debug merge --output final.json *.json`,
+
 		Args: cobra.MinimumNArgs(2),
 		RunE: runMerge,
 	}
 
-	mergeCmd.Flags().Int("level", 0, "Merge level")
+	mergeCmd.Flags().String("output", "", "Output file path for merged SBOM (required)")
+	mergeCmd.Flags().Int("level", 0, "Merge level (reserved for future use)")
+	if err := mergeCmd.MarkFlagRequired("output"); err != nil {
+		slog.Error("Failed to mark output flag as required", "error", err)
+		os.Exit(1)
+	}
 
 	return mergeCmd
 }
 
 // runMerge executes the SBOM merge process.
-//
-// Currently returns ErrNotImplemented as the merge functionality is planned for future implementation.
 func runMerge(cmd *cobra.Command, args []string) error {
+	outputPath, _ := cmd.Flags().GetString("output")
 	level, _ := cmd.Flags().GetInt("level")
 
-	slog.Debug("Starting sbomtool merge",
-		"level", level,
-		"file_count", len(args))
-
-	_, err := merge.Merge(level, args)
-	if err != nil {
-		return fmt.Errorf("sBOM merge failed: %w", err)
+	config := merge.MergeConfig{
+		OutputPath: outputPath,
+		Level:      level,
 	}
+
+	slog.Info("Starting SBOM merge process",
+		"input_files", len(args),
+		"output_path", outputPath)
+
+	result, err := merge.Merge(config, args)
+	if err != nil {
+		return fmt.Errorf("sbom merge failed: %w", err)
+	}
+
+	slog.Info("SBOM merge completed successfully",
+		"input_sboms", result.Statistics.InputSBOMs,
+		"input_packages", result.Statistics.TotalInputPackages,
+		"output_packages", result.Statistics.OutputPackages,
+		"deduplicated", result.Statistics.DeduplicatedPackages,
+		"processing_time", result.Statistics.ProcessingTime)
 
 	return nil
 }
