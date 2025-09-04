@@ -1,0 +1,63 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "relationships-test-2",
+  "documentNamespace": "https://test.com/relationships-2",
+  "creationInfo": {
+    "created": "2025-08-22T23:25:00Z",
+    "creators": ["Tool: test"]
+  },
+  "packages": [
+    {
+      "name": "shared-lib",
+      "SPDXID": "SPDXRef-Package-shared-lib-2",
+      "versionInfo": "2.0.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:shared:lib:2.0.0:*:*:*:*:*:*:*"
+        }
+      ]
+    },
+    {
+      "name": "linux-kernel",
+      "SPDXID": "SPDXRef-Package-linux-kernel",
+      "versionInfo": "5.4.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "GPL-2.0",
+      "licenseDeclared": "GPL-2.0",
+      "copyrightText": "NOASSERTION",
+      "primaryPackagePurpose": "OPERATING-SYSTEM",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:o:linux:linux_kernel:5.4.0:*:*:*:*:*:*:*"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-shared-lib-2",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-shared-lib-2",
+      "relatedSpdxElement": "SPDXRef-Package-linux-kernel",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ]
+}
