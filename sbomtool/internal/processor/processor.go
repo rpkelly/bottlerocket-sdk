@@ -81,6 +81,11 @@ func (p *SyftConfiguredProcessor) LoadSBOM(path string) (*sbom.SBOM, string, err
 	return s, string(formatID), nil
 }
 
+// GetFormatEncoders returns the configured format encoders
+func (p *SyftConfiguredProcessor) GetFormatEncoders() []sbom.FormatEncoder {
+	return p.formatEncoders
+}
+
 // SaveSBOM saves an SBOM using Syft's format encoders.
 // It supports all formats that Syft can encode.
 func (p *SyftConfiguredProcessor) SaveSBOM(s *sbom.SBOM, path, formatName string) error {
@@ -132,9 +137,4 @@ func (p *SyftConfiguredProcessor) countPackagesByType(catalog *pkg.Collection, p
 		}
 	}
 	return count
-}
-
-// GetFormatEncoders returns the configured format encoders
-func (p *SyftConfiguredProcessor) GetFormatEncoders() []sbom.FormatEncoder {
-	return p.formatEncoders
 }

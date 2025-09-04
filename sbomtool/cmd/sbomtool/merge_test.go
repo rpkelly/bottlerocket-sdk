@@ -32,7 +32,7 @@ func TestMergeCommandMetadata(t *testing.T) {
 		{
 			name:     "long description contains key information",
 			field:    "Long",
-			expected: "not yet implemented",
+			expected: "DEDUPLICATION",
 		},
 	}
 
@@ -133,8 +133,8 @@ func TestMergeArgumentValidation(t *testing.T) {
 	}
 }
 
-func TestMergeNotImplemented(t *testing.T) {
-	t.Run("merge command returns not implemented error", func(t *testing.T) {
+func TestMergeValidation(t *testing.T) {
+	t.Run("merge command returns flag validation error", func(t *testing.T) {
 		// Given: A root command with merge subcommand
 		rootCmd := createRootCommand()
 		mergeCmd := createMergeCommand()
@@ -155,9 +155,9 @@ func TestMergeNotImplemented(t *testing.T) {
 		// When: Executing the command
 		err := rootCmd.Execute()
 
-		// Then: Should return not implemented error
-		assert.Error(t, err, "Merge command should return not implemented error")
-		assert.Contains(t, err.Error(), "not yet implemented", "Error should indicate not implemented")
+		// Then: Should return flag validation error
+		assert.Error(t, err, "Merge command should return flag validation error")
+		assert.Contains(t, err.Error(), "required flag", "Error should indicate required flag missing")
 	})
 }
 
@@ -186,7 +186,7 @@ func TestMergeCommandHelp(t *testing.T) {
 			"Merge multiple SBOM files",
 			"--level",
 			"file1 file2",
-			"not yet implemented",
+			"DEDUPLICATION",
 		}
 
 		for _, section := range expectedSections {
