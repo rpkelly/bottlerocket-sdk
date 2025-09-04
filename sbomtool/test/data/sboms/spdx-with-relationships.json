@@ -1,0 +1,66 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "test-document-with-relationships",
+  "documentNamespace": "https://example.com/test-document",
+  "creationInfo": {
+    "created": "2025-08-06T20:00:00Z",
+    "creators": ["Tool: sbomtool-test"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-A",
+      "name": "package-a",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": true,
+      "files": [
+        {
+          "SPDXID": "SPDXRef-File-A-bin",
+          "fileName": "/usr/bin/app-a"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-B", 
+      "name": "package-b",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": true,
+      "files": [
+        {
+          "SPDXID": "SPDXRef-File-B-lib",
+          "fileName": "/usr/lib/libb.so"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-C",
+      "name": "package-c", 
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": true,
+      "files": [
+        {
+          "SPDXID": "SPDXRef-File-C-lib",
+          "fileName": "/usr/lib/libc.so"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-A",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-B"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-B",
+      "relationshipType": "DEPENDS_ON", 
+      "relatedSpdxElement": "SPDXRef-Package-C"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-C",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-A"
+    }
+  ]
+}
