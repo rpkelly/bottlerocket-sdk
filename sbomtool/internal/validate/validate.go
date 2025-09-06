@@ -3,6 +3,8 @@ package validate
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +38,6 @@ func ValidatePackageName(name string) error {
 			return fmt.Errorf("package name contains invalid character at position %d", i)
 		}
 	}
-
 
 	return nil
 }
@@ -73,6 +74,129 @@ func ValidateDirectory(path string, purpose string, requireExists bool) error {
 
 	if !info.IsDir() {
 		return fmt.Errorf("%s path is not a directory: %s", purpose, absPath)
+	}
+
+	return nil
+}
+
+// ValidateFilePath validates that a file path exists and is readable.
+func ValidateFilePath(path string, purpose string, mustExist bool) error {
+	if path == "" {
+		return fmt.Errorf("%s path cannot be empty", purpose)
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if mustExist {
+				return fmt.Errorf("%s file does not exist: %s", purpose, path)
+			}
+			return nil
+		}
+		return fmt.Errorf("cannot access %s file: %w", purpose, err)
+	}
+
+	if info.IsDir() {
+		return fmt.Errorf("%s path is a directory, not a file: %s", purpose, path)
+	}
+
+	return nil
+}
+
+// ValidateOutputPath validates that an output file path is writable.
+func ValidateOutputPath(path string) error {
+	if path == "" {
+		return fmt.Errorf("output path cannot be empty")
+	}
+
+	dir := filepath.Dir(path)
+	if err := ValidateDirectory(dir, "output directory", false); err != nil {
+		return err
+	}
+
+	if info, err := os.Stat(path); err == nil {
+		if info.IsDir() {
+			return fmt.Errorf("output path is a directory, not a file: %s", path)
+		}
+		file, err := os.OpenFile(path, os.O_WRONLY, 0)
+		if err != nil {
+			return fmt.Errorf("cannot write to output file: %w", err)
+		}
+		if closeErr := file.Close(); closeErr != nil {
+			slog.Debug("failed to close validation file", "error", closeErr, "path", path)
+		}
+	}
+
+	return nil
+}
+
+// ValidateSBOMFormat validates that the input file is a valid SBOM format.
+func ValidateSBOMFormat(path string) error {
+	format, err := DetectSBOMFormat(path)
+	if err != nil {
+		return err
+	}
+
+	if format == "" {
+		return fmt.Errorf("unrecognized SBOM format")
+	}
+
+	return nil
+}
+
+// DetectSBOMFormat detects the format of an SBOM file by examining its content.
+func DetectSBOMFormat(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot open SBOM file: %w", err)
+	}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			slog.Debug("failed to close SBOM file", "error", closeErr, "path", path)
+		}
+	}()
+
+	// Read the first few KB to detect format
+	buffer := make([]byte, 4096)
+	n, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", fmt.Errorf("cannot read SBOM file: %w", err)
+	}
+
+	content := string(buffer[:n])
+
+	if strings.Contains(content, "\"spdxVersion\"") ||
+		strings.Contains(content, "\"SPDXID\"") ||
+		strings.Contains(content, "\"spdxId\"") {
+		return "SPDX", nil
+	}
+
+	if strings.Contains(content, "\"bomFormat\"") ||
+		strings.Contains(content, "\"specVersion\"") ||
+		strings.Contains(content, "\"cyclonedx\"") {
+		return "CycloneDX", nil
+	}
+
+	return "", nil
+}
+
+// ValidateOutputDirectoryPermissions checks if the output directory is writable.
+func ValidateOutputDirectoryPermissions(outDir string) error {
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return fmt.Errorf("cannot create output directory: %w", err)
+	}
+
+	testFile := filepath.Join(outDir, ".sbomtool-write-test")
+	file, err := os.Create(testFile)
+	if err != nil {
+		return fmt.Errorf("cannot write to output directory: %w", err)
+	}
+
+	if closeErr := file.Close(); closeErr != nil {
+		slog.Debug("failed to close test file", "error", closeErr, "path", testFile)
+	}
+	if removeErr := os.Remove(testFile); removeErr != nil {
+		slog.Debug("failed to remove test file", "error", removeErr, "path", testFile)
 	}
 
 	return nil
