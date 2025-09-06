@@ -26,12 +26,12 @@ func TestGenerateCommandMetadata(t *testing.T) {
 		{
 			name:     "correct short description",
 			field:    "Short",
-			expected: "Generate SBOM files for a directory",
+			expected: "Generate comprehensive SBOM files from build directories",
 		},
 		{
 			name:     "long description contains key information",
 			field:    "Long",
-			expected: "build directory",
+			expected: "build directories",
 		},
 	}
 
@@ -79,35 +79,35 @@ func TestGenerateCommandFlags(t *testing.T) {
 			flagName:     "name",
 			expectedType: "string",
 			defaultValue: "",
-			usage:        "Name of the target package",
+			usage:        "Package name for SBOM identification",
 		},
 		{
 			name:         "build-dir flag",
 			flagName:     "build-dir",
 			expectedType: "string",
 			defaultValue: "",
-			usage:        "Target directory of the package",
+			usage:        "Build directory containing source code",
 		},
 		{
 			name:         "out-dir flag",
 			flagName:     "out-dir",
 			expectedType: "string",
 			defaultValue: "",
-			usage:        "Output directory for the SBOM",
+			usage:        "Output directory for generated SBOM files",
 		},
 		{
 			name:         "spdx flag",
 			flagName:     "spdx",
 			expectedType: "bool",
 			defaultValue: false,
-			usage:        "Generate an SPDX SBOM",
+			usage:        "Generate SPDX 2.3 format SBOM",
 		},
 		{
 			name:         "cyclonedx flag",
 			flagName:     "cyclonedx",
 			expectedType: "bool",
 			defaultValue: false,
-			usage:        "Generate a CycloneDX SBOM",
+			usage:        "Generate CycloneDX 1.6 format SBOM",
 		},
 	}
 
@@ -273,7 +273,7 @@ func TestGenerateCommandHelp(t *testing.T) {
 
 		expectedSections := []string{
 			"generate",
-			"Generate SBOM files",
+			"Generate Software Bill of Materials",
 			"--name",
 			"--build-dir",
 			"--out-dir",
