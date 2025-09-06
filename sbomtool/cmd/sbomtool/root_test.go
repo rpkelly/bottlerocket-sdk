@@ -23,12 +23,12 @@ func TestRootCommandMetadata(t *testing.T) {
 		{
 			name:     "correct short description",
 			field:    "Short",
-			expected: "Software Bill of Materials (SBOM) generation tool",
+			expected: "Software Bill of Materials (SBOM) generation and filtering tool",
 		},
 		{
 			name:     "long description contains key information",
 			field:    "Long",
-			expected: "command-line utility",
+			expected: "generates and filters",
 		},
 	}
 
@@ -69,7 +69,7 @@ func TestPersistentFlags(t *testing.T) {
 		// Then: Flag should be registered with correct defaults
 		require.NotNil(t, flag, "log-level flag should be registered")
 		assert.Equal(t, "info", flag.DefValue, "Default log level should be 'info'")
-		assert.Equal(t, "Log level (debug, info, warn, error)", flag.Usage, "Flag usage should be descriptive")
+		assert.Equal(t, "Set logging verbosity (debug=verbose, info=standard, warn=important, error=critical)", flag.Usage, "Flag usage should be descriptive")
 	})
 
 	t.Run("log-level flag default value", func(t *testing.T) {
@@ -123,7 +123,7 @@ func TestLoggingConfiguration(t *testing.T) {
 			// Given: A root command with log level set
 			cmd := createRootCommand()
 			if err := cmd.PersistentFlags().Set("log-level", tt.logLevel); err != nil {
-				t.Fatalf("Failed to set log level: %v", err)
+				t.Fatalf("Failed to set log-level flag: %v", err)
 			}
 
 			// When: Executing PersistentPreRunE
@@ -157,7 +157,7 @@ func TestRootCommandHelp(t *testing.T) {
 
 		// The help text should contain key information from the Long description
 		expectedSections := []string{
-			"command-line utility",
+			"generates and filters",
 			"Software Bill of Materials",
 			"SBOM files",
 		}
@@ -192,7 +192,7 @@ func TestInvalidLogLevel(t *testing.T) {
 		// Given: A root command with invalid log level
 		cmd := createRootCommand()
 		if err := cmd.PersistentFlags().Set("log-level", "invalid-level"); err != nil {
-			t.Fatalf("Failed to set log level: %v", err)
+			t.Fatalf("Failed to set log-level flag: %v", err)
 		}
 
 		// When: Executing PersistentPreRunE
