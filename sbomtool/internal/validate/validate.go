@@ -37,6 +37,7 @@ func ValidatePackageName(name string) error {
 		}
 	}
 
+
 	return nil
 }
 
