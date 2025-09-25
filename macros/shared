@@ -297,14 +297,42 @@ CROSS_CMAKE_TOOLCHAIN_EOF\
 %_cross_sbom_dir %{_cross_datadir}/sboms
 %_cross_sbom_package_dir %{_cross_sbom_dir}/%{_uncross_name}
 
-%cross_generate_sbom \
-  mkdir -p %{_builddir}/sbom-temp \
-  sbomtool generate --name %{name} --out-dir %{_builddir}/sbom-temp --build-dir %{_builddir} --spdx --cyclonedx
+# SBOM generation control
+%cross_generate_sbom_auto 1
 
-%cross_install_sbom \
+# Enhanced SBOM generation macro - takes optional name and input path
+# Usage: %cross_generate_sbom [name] [input_path]
+# No params: uses %{name} and %{_builddir} (current behavior)
+# One param: uses provided name and %{_builddir}
+# Two params: uses provided name and input path
+%cross_generate_sbom() \
+  %{expand:%%define sbom_name %{?1}%{!?1:%{name}}} \
+  %{expand:%%define sbom_input %{?2}%{!?2:%{_builddir}}} \
+  mkdir -p %{_builddir}/sbom-temp \
+  sbomtool generate --name %{sbom_name} --out-dir %{_builddir}/sbom-temp --input %{sbom_input} --spdx --cyclonedx
+
+# Enhanced SBOM installation macro - takes optional name
+# Usage: %cross_install_sbom [name]
+# No params: uses %{name} (current behavior)
+# One param: uses provided name
+%cross_install_sbom() \
+  %{expand:%%define sbom_name %{?1}%{!?1:%{name}}} \
   install -d %{buildroot}%{_cross_sbom_package_dir} \
-  install -p -m 0644 %{_builddir}/sbom-temp/%{name}-spdx.json %{buildroot}%{_cross_sbom_package_dir}/ \
-  install -p -m 0644 %{_builddir}/sbom-temp/%{name}-cyclonedx.json %{buildroot}%{_cross_sbom_package_dir}/
+  if [ -f "%{_builddir}/sbom-temp/%{sbom_name}-spdx.json" ]; then \
+    install -p -m 0644 %{_builddir}/sbom-temp/%{sbom_name}-spdx.json %{buildroot}%{_cross_sbom_package_dir}/ \
+  fi \
+  if [ -f "%{_builddir}/sbom-temp/%{sbom_name}-cyclonedx.json" ]; then \
+    install -p -m 0644 %{_builddir}/sbom-temp/%{sbom_name}-cyclonedx.json %{buildroot}%{_cross_sbom_package_dir}/ \
+  fi
+
+# List SBOM files for %files section - takes optional name
+# Usage: %cross_sbom_files [name]
+# No params: uses %{name}
+# One param: uses provided name
+%cross_sbom_files() \
+  %{expand:%%define sbom_name %{?1}%{!?1:%{name}}} \
+  %{_cross_sbom_package_dir}/%{sbom_name}-spdx.json \
+  %{_cross_sbom_package_dir}/%{sbom_name}-cyclonedx.json
 
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy
@@ -354,7 +382,13 @@ CROSS_CMAKE_TOOLCHAIN_EOF\
 %__arch_install_post \
   /usr/lib/rpm/check-buildroot \
   %{?cross_check_fips:%{__cross_check_fips_cmd}} \
-  %cross_generate_attribution
+  %cross_generate_attribution \
+  %{?cross_generate_sbom_auto:%cross_install_sbom}
+
+# Post-build hook for automatic SBOM generation
+%__spec_build_post \
+  %{?cross_generate_sbom_auto:%cross_generate_sbom} \
+  %{___build_post}
 
 # Link "sources" from the new per-package build directory to the old location.
 %__spec_prep_pre \
